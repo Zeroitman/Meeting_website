@@ -40,3 +40,21 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return '%s. %s %s' % (self.id, self.name, self.surname)
+
+
+class Rating(models.Model):
+    from_user = models.ForeignKey(User, related_name="from_people", on_delete=models.CASCADE, verbose_name="Лайк от")
+    to_user = models.ForeignKey(User, related_name="to_people", on_delete=models.CASCADE, verbose_name="Лайк для")
+
+    class Meta:
+        verbose_name = 'Оценка'
+        verbose_name_plural = 'Оценки'
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(from_user=models.F('to_user')),
+                name='users_cannot_rate_themselves'
+            ),
+        ]
+
+    def __str__(self):
+        return '%s. %s %s' % (self.id, self.from_user, self.to_user)

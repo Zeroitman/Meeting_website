@@ -39,3 +39,9 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = ('password', 'last_login', 'is_active', 'is_staff', 'groups', 'user_permissions', 'is_superuser')
+
+
+class UserRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rating
+        exclude = ()

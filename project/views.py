@@ -1,4 +1,6 @@
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from rest_framework.exceptions import ParseError
+from project.watemark import watermark_avatar
 from trainees.settings import DATA_UPLOAD_MAX_NUMBER_FIELDS, API_SECURE_KEY
 from rest_framework import status
 from rest_framework.response import Response
@@ -20,6 +22,12 @@ class RegisterUserView(CreateAPIView):
             if avatar.size > DATA_UPLOAD_MAX_NUMBER_FIELDS:
                 return Response({"result": "Avatar not valid"}, status=status.HTTP_400_BAD_REQUEST)
             new_request_data = request.data.copy()
+            del new_request_data['avatar']
+            image = watermark_avatar(avatar.file)
+            new_avatar = InMemoryUploadedFile(file=image, name=avatar.name, field_name=avatar.field_name,
+                                              content_type=avatar.content_type, size=image.getbuffer().nbytes,
+                                              charset=avatar.charset)
+            new_request_data['avatar'] = new_avatar
             serializer = UserRegisterSerializer(data=new_request_data)
             serializer.is_valid(raise_exception=True)
             serializer.save()

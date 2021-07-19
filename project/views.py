@@ -1,12 +1,19 @@
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from rest_framework.decorators import api_view
 from rest_framework.exceptions import ParseError
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.views import TokenObtainPairView
 from project.watemark import watermark_avatar
 from trainees.settings import DATA_UPLOAD_MAX_NUMBER_FIELDS, API_SECURE_KEY
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import AllowAny
-from .serializers import *
+from project.serializers import *
+
+
+class MyObtainTokenPairView(TokenObtainPairView):
+    permission_classes = (AllowAny,)
+    serializer_class = MyTokenObtainPairSerializer
 
 
 class RegisterUserView(CreateAPIView):
@@ -34,3 +41,25 @@ class RegisterUserView(CreateAPIView):
             return Response({"result": "User created successfully"}, status=status.HTTP_201_CREATED)
         except Exception as ex:
             raise ParseError(ex)
+
+
+@api_view(['GET'])
+def user_list(request):
+    if request.headers.get('API-SECURE-KEY') != API_SECURE_KEY:
+        return Response({"result": "Invalid secure key"}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        element = dict()
+        name, surname, gender = request.data.get('name'), request.data.get('surname'), request.data.get('gender')
+        if name:
+            element['name'] = name
+        if surname:
+            element['surname'] = surname
+        if gender:
+            element['gender'] = gender
+        users = User.objects.filter(**element)
+        serializer = UserListSerializer(users, many=True)
+        if serializer.data:
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+        return Response({"result": "NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as ex:
+        raise ParseError(ex)

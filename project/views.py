@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from project.send_email import send_notification
+from project.utils import determination
 from project.watemark import watermark_avatar
 from trainees.settings import DATA_UPLOAD_MAX_NUMBER_FIELDS, API_SECURE_KEY
 from rest_framework import status
@@ -39,7 +40,11 @@ class RegisterUserView(CreateAPIView):
             new_request_data['avatar'] = new_avatar
             serializer = UserRegisterSerializer(data=new_request_data)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+            new_user = serializer.save()
+            for user in User.objects.exclude(id=new_user.id):
+                dis_determination = determination(from_user=new_user, to_user=user)
+                distance = UserDistance(from_user_id=new_user.id, to_user_id=user.id, distance=dis_determination)
+                distance.save()
             return Response({"result": "User created successfully"}, status=status.HTTP_201_CREATED)
         except Exception as ex:
             raise ParseError(ex)
@@ -49,6 +54,8 @@ class RegisterUserView(CreateAPIView):
 def user_list(request):
     if request.headers.get('API-SECURE-KEY') != API_SECURE_KEY:
         return Response({"result": "Invalid secure key"}, status=status.HTTP_400_BAD_REQUEST)
+    if not request.auth:
+        return Response({"result": "No token"}, status=status.HTTP_400_BAD_REQUEST)
     try:
         element = dict()
         name, surname, gender = request.data.get('name'), request.data.get('surname'), request.data.get('gender')
@@ -58,8 +65,13 @@ def user_list(request):
             element['surname'] = surname
         if gender:
             element['gender'] = gender
-        users = User.objects.filter(**element)
-        serializer = UserListSerializer(users, many=True)
+        qs = User.objects.filter(**element).exclude(id=request.user.id)
+        distance = request.data.get('distance')
+        if distance:
+            qs1 = qs.filter(from_user__to_user=request.user.id, from_user__distance__gte=int(distance))
+            qs2 = qs.filter(to_user__from_user=request.user.id, to_user__distance__gte=int(distance))
+            qs = qs1.union(qs2)
+        serializer = UserListSerializer(qs, many=True)
         if serializer.data:
             return Response(data=serializer.data, status=status.HTTP_200_OK)
         return Response({"result": "NOT_FOUND"}, status=status.HTTP_404_NOT_FOUND)

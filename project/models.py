@@ -31,8 +31,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, verbose_name="Пол")
     avatar = models.ImageField(upload_to='user_avatars/', verbose_name="Аватар")
+    longitude = models.DecimalField(verbose_name="Долгота", max_digits=7, decimal_places=4)
+    latitude = models.DecimalField(verbose_name="Широта", max_digits=7, decimal_places=4)
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
 
@@ -53,6 +55,25 @@ class Rating(models.Model):
             models.CheckConstraint(
                 check=~models.Q(from_user=models.F('to_user')),
                 name='users_cannot_rate_themselves'
+            ),
+        ]
+
+    def __str__(self):
+        return '%s. %s %s' % (self.id, self.from_user, self.to_user)
+
+
+class UserDistance(models.Model):
+    from_user = models.ForeignKey(User, related_name="from_user", on_delete=models.CASCADE, verbose_name="Расстояние от")
+    to_user = models.ForeignKey(User, related_name="to_user", on_delete=models.CASCADE, verbose_name="Расстояние до")
+    distance = models.PositiveSmallIntegerField(verbose_name="Расстояние")
+
+    class Meta:
+        verbose_name = 'Расстояние'
+        verbose_name_plural = 'Расстояния'
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(from_user=models.F('to_user')),
+                name='users_cannot_distance_themselves'
             ),
         ]
 

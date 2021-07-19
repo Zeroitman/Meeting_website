@@ -8,7 +8,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'name', 'surname', 'gender', 'password', 'password2', 'avatar']
+        fields = ['email', 'name', 'surname', 'gender', 'password', 'password2', 'avatar', 'latitude', 'longitude']
 
     def save(self, *args, **kwargs):
         user = User(
@@ -16,7 +16,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             name=self.validated_data['name'],
             surname=self.validated_data['surname'],
             gender=self.validated_data['gender'],
-            avatar=self.validated_data['avatar']
+            avatar=self.validated_data['avatar'],
+            latitude=self.validated_data['latitude'],
+            longitude=self.validated_data['longitude'],
         )
         password = self.validated_data['password']
         password2 = self.validated_data['password2']

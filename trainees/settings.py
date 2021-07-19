@@ -16,9 +16,7 @@ import sys
 from envparse import env
 import dj_database_url
 
-env.read_envfile(os.path.expanduser('../conf/config.env'))
-
-
+env.read_envfile(os.path.expanduser('./conf/config.env'))
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 500000000
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -28,12 +26,11 @@ LOGGING_LEVEL = env.str('LOGGING_LEVEL', default='INFO')
 
 BASE_URL = env.str('BASE_URL')
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 SECRET_KEY = env.str('SECRET_KEY')
-
+API_SECURE_KEY = env.str('API_SECURE_KEY')
 DEBUG = env.bool('DEBUG')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
@@ -43,10 +40,8 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
-
 ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False
 ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 10
-
 
 INSTALLED_APPS = [
     'adminactions',
@@ -57,14 +52,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-
-    # Our apps
-    'admintools',
+    'rest_framework',
+    'djoser',
+    'project',
 ]
 
-
 SITE_ID = 1
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -76,9 +69,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 ROOT_URLCONF = 'trainees.urls'
-
 
 TEMPLATES = [
     {
@@ -98,31 +89,27 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = 'trainees.wsgi.application'
 
-
 DATABASES = {
-    'default':  dj_database_url.parse(
+    'default': dj_database_url.parse(
         env.str('DATABASE_URL'), conn_max_age=30),
 }
 
-
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', # noqa
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',  # noqa
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', # noqa
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',  # noqa
         'OPTIONS': {
             'min_length': 6,
         }
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', # noqa
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',  # noqa
     },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
@@ -133,7 +120,6 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-
 # Email setup
 EMAIL_BACKEND = env.str('EMAIL_BACKEND')
 
@@ -143,7 +129,7 @@ STATICFILES_DIRS = [
 
 STATIC_URL = '/static/'
 MEDIA_URL = "/media/"
-
+AUTH_USER_MODEL = 'project.User'
 STATIC_ROOT = os.path.join(BASE_DIR, "static_cdn")
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
@@ -174,18 +160,17 @@ LOGGING = {
         }
     },
     'loggers': {
-        'admintools': {
-            'handlers': ['console',],
+        'project': {
+            'handlers': ['console', ],
             'level': 'DEBUG',
         },
         'django': {
-            'handlers': ['console',],
+            'handlers': ['console', ],
             'level': 'ERROR',
             'propagate': True,
         },
     }
 }
-
 
 CACHES = {
     'default': {
@@ -195,11 +180,23 @@ CACHES = {
     'snowflake': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 5*60,  # 5*60 = 5 minutes
+        'TIMEOUT': 5 * 60,  # 5*60 = 5 minutes
     },
     'longhorn': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'cache_table_for_django',
-        'TIMEOUT': 1*60*60,  # 1*60*60 = 1 hour
+        'TIMEOUT': 1 * 60 * 60,  # 1*60*60 = 1 hour
     },
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+}
+
+DJOSER = {
+    'ACTIVATION_URL': '#/activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': False,
 }

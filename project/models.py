@@ -16,9 +16,6 @@ class MyUserManager(BaseUserManager):
     def create_user(self, email, password):
         return self._create_user(email, password)
 
-    def create_superuser(self, email, password):
-        return self._create_user(email, password, is_staff=True, is_superuser=True)
-
 
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.AutoField(primary_key=True, unique=True)
